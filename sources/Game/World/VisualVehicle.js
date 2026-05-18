@@ -7,6 +7,7 @@ import { cameraPosition, color, Fn, min, mix, normalWorld, positionViewDirection
 import { clamp } from 'three/src/math/MathUtils.js'
 import gsap from 'gsap'
 import { MeshDefaultMaterial } from '../Materials/MeshDefaultMaterial.js'
+import { VisualCharacter } from './VisualCharacter.js'
 
 export class VisualVehicle
 {
@@ -16,7 +17,11 @@ export class VisualVehicle
         
         this.model = model
 
+        this.characterMode = true
+
         this.setParts()
+
+        this.visualCharacter = new VisualCharacter(this.parts.chassis)
         this.setMainGroundTrack()
         this.setWheels()
         this.setBlinkers()
@@ -31,7 +36,39 @@ export class VisualVehicle
         {
             this.update()
         }
+
         this.game.ticker.events.on('tick', this.tickCallback, 8)
+    }
+    hideVehicleVisuals()
+    {
+        const hiddenVehicleParts = [
+            'bodyPainted',
+            'blinkerLeft',
+            'blinkerRight',
+         'stopLights',
+         'backLights',
+         'wheelContainer',
+         'antenna',
+         'cell1',
+         'cell2',
+         'cell3',
+         'energy',
+        ]
+
+        for(const partName of hiddenVehicleParts)
+        {
+            if(this.parts[partName])
+                this.parts[partName].visible = false
+        }
+
+        if(this.boostTrails)
+        {
+            if(this.boostTrails.left)
+                this.boostTrails.left.alpha = 0
+
+            if(this.boostTrails.right)
+                this.boostTrails.right.alpha = 0
+        }
     }
 
     destroy()
@@ -85,10 +122,24 @@ export class VisualVehicle
         {
             if(child.isMesh)
             {
-                child.receiveShadow = true
-                child.castShadow = true
-                child.material.shadowSide = THREE.BackSide
+                child.visible = false
+                //child.receiveShadow = true
+                //child.castShadow = true
+                //child.material.shadowSide = THREE.BackSide
             }
+      //this.character = null
+
+      //this.game.resourcesLoader.load([
+        //['character', 'vehicle/personaje.glb', 'gltf']
+        //]).then((resources) =>
+        //{
+          //  this.character = resources.character.scene
+
+            //this.character.scale.set(0.8, 0.8, 0.8)
+            //this.character.position.set(0, -0.6, 0)
+
+             //this.parts.chassis.add(this.character)
+        //})
 
             for(const search of searchList)
             {
@@ -106,24 +157,19 @@ export class VisualVehicle
         this.game.materials.updateObject(this.parts.chassis)
         this.game.scene.add(this.parts.chassis)
 
-        // Blinker left
+        // Character mode: hide vehicle-specific parts
         if(this.parts.blinkerLeft)
             this.parts.blinkerLeft.visible = false
 
-        // Blinker right
         if(this.parts.blinkerRight)
             this.parts.blinkerRight.visible = false
 
-        // Stop lights
         if(this.parts.stopLights)
             this.parts.stopLights.visible = false
 
-        // Back lights
         if(this.parts.backLights)
             this.parts.backLights.visible = false
-
-        // Wheel
-        this.game.materials.updateObject(this.parts.wheelContainer)
+        //this.game.materials.updateObject(this.parts.wheelContainer)
     }
 
     setPaints()
@@ -424,116 +470,103 @@ export class VisualVehicle
         this.parts.chassis.quaternion.copy(physicalVehicle.quaternion)
         
         // Wheels
-        this.wheels.steering += ((this.game.player.steering * physicalVehicle.steeringAmplitude) - this.wheels.steering) * this.game.ticker.deltaScaled * 16
-
-        const wheelsRotation = (physicalVehicle.forwardSpeed) / physicalVehicle.wheels.settings.radius * 0.006
-
-        for(let i = 0; i < 4; i++)
+        if(!this.characterMode && physicalVehicle.wheels && this.wheels)
         {
-            const visualWheel = this.wheels.items[i]
-            const physicalWheel = physicalVehicle.wheels.items[i]
+            this.wheels.steering += ((this.game.player.steering * physicalVehicle.steeringAmplitude) - this.wheels.steering) * this.game.ticker.deltaScaled * 16
 
-            // visualWheel.container.position.copy(physicalWheel.basePosition)
+            const wheelsRotation = (physicalVehicle.forwardSpeed) / physicalVehicle.wheels.settings.radius * 0.006
 
-            if(!this.game.inputs.actions.get('brake').active || this.game.inputs.actions.get('forward').active || this.game.inputs.actions.get('backward').active)
-            {
-                if(i === 0 || i === 2)
-                    visualWheel.cylinder.rotation.z += wheelsRotation
-                else
-                    visualWheel.cylinder.rotation.z -= wheelsRotation
+            for(let i = 0; i < 4; i++)
+            {   
+                const visualWheel = this.wheels.items[i]
+                const physicalWheel = physicalVehicle.wheels.items[i]
+
+                if(!this.game.inputs.actions.get('brake').active || this.game.inputs.actions.get('forward').active || this.game.inputs.actions.get('backward').active)
+                {
+                    if(i === 0 || i === 2)
+                        visualWheel.cylinder.rotation.z += wheelsRotation
+                    else
+                        visualWheel.cylinder.rotation.z -= wheelsRotation
+                }
+
+                if(i === 0)
+                    visualWheel.container.rotation.y = Math.PI + this.wheels.steering
+
+                if(i === 1)
+                    visualWheel.container.rotation.y = this.wheels.steering
+
+                const suspensionLength = physicalWheel.suspensionLength
+                let wheelY = physicalWheel.basePosition.y - suspensionLength
+                wheelY = Math.min(wheelY, -0.5)
+
+                visualWheel.container.position.x = physicalWheel.basePosition.x
+                visualWheel.container.position.y += (wheelY - visualWheel.container.position.y) * 25 * this.game.ticker.deltaScaled
+                visualWheel.container.position.z = physicalWheel.basePosition.z
+
+                if(visualWheel.suspension)
+                {
+                    const suspensionScale = Math.abs(visualWheel.container.position.y) - 0.5
+                    visualWheel.suspension.scale.y = suspensionScale
+                }
+
+                // Ground tracks
+                visualWheel.groundTrack.update(physicalWheel.contactPoint, physicalWheel.inContact)
             }
-
-            if(i === 0)
-                visualWheel.container.rotation.y = Math.PI + this.wheels.steering
-
-            if(i === 1)
-                visualWheel.container.rotation.y = this.wheels.steering
-  
-            const suspensionLength = physicalWheel.suspensionLength
-            let wheelY = physicalWheel.basePosition.y - suspensionLength
-            wheelY = Math.min(wheelY, -0.5)
-
-            visualWheel.container.position.x = physicalWheel.basePosition.x
-            visualWheel.container.position.y += (wheelY - visualWheel.container.position.y) * 25 * this.game.ticker.deltaScaled
-            visualWheel.container.position.z = physicalWheel.basePosition.z
-
-            if(visualWheel.suspension)
-            {
-                const suspensionScale = Math.abs(visualWheel.container.position.y) - 0.5
-                visualWheel.suspension.scale.y = suspensionScale
-            }
-
-            // Ground tracks
-            visualWheel.groundTrack.update(physicalWheel.contactPoint, physicalWheel.inContact)
-        }
+}
 
         // Main ground track
-        this.mainGroundTrack.update(physicalVehicle.position, physicalVehicle.position.y < 1.5)
+        if(!this.characterMode && this.mainGroundTrack)
+        {
+            this.mainGroundTrack.update(
+                physicalVehicle.position,
+                physicalVehicle.position.y < 1.5
+            )
+        }
 
         // Antenna
-        if(this.antenna)
+        if(!this.characterMode && this.antenna)
         {
-            const angle = Math.atan2(this.antenna.target.x - physicalVehicle.position.x, this.antenna.target.z - physicalVehicle.position.z)
+            const angle = Math.atan2(
+                this.antenna.target.x - physicalVehicle.position.x,
+                this.antenna.target.z - physicalVehicle.position.z
+            )
+
             this.antenna.object.rotation.y = angle - this.parts.chassis.rotation.y
             this.antenna.headReference.getWorldPosition(this.antenna.head.position)
             this.antenna.head.lookAt(this.antenna.target)
 
             const antennaTargetDistance = this.antenna.target.distanceTo(physicalVehicle.position)
-            
+    
             const antennaRotationSpeed = remapClamp(antennaTargetDistance, 50, 5, 1, 10)
             this.antenna.headAxle.rotation.z += this.game.ticker.deltaScaled * antennaRotationSpeed
         }
 
-        // Stop/back lights
-        if(this.game.player.braking)
-        {
-            if(this.parts.stopLights)
-                this.parts.stopLights.visible = true
-
-            if(this.parts.backLights)
-            {
-                this.parts.backLights.visible = true
-                this.parts.backLights.material = this.game.materials.getFromName('emissiveOrangeRadialGradient')
-            }
-        }
-        else
-        {
-            if(this.parts.stopLights)
-                this.parts.stopLights.visible = false
-
-            if(this.parts.backLights)
-            {
-                // Backward
-                if(this.game.player.accelerating < 0)
-                {
-                    this.parts.backLights.visible = true
-                    this.parts.backLights.material = this.backLights.material
-                }
-                // Backward
-                else
-                {
-                    this.parts.backLights.visible = false
-                }
-            }
-        }
-
         // Boost trails
-        const trailAlpha = physicalVehicle.goingForward && this.game.player.boosting && this.game.player.accelerating > 0 ? 1 : 0
-        this.boostTrails.leftReference.getWorldPosition(this.boostTrails.left.position)
-        this.boostTrails.left.alpha = trailAlpha
-        this.boostTrails.rightReference.getWorldPosition(this.boostTrails.right.position)
-        this.boostTrails.right.alpha = trailAlpha
+        if(!this.characterMode && this.boostTrails)
+        {
+            const trailAlpha = physicalVehicle.goingForward && this.game.player.boosting && this.game.player.accelerating > 0 ? 1 : 0
+
+            this.boostTrails.leftReference.getWorldPosition(this.boostTrails.left.position)
+            this.boostTrails.left.alpha = trailAlpha
+
+            this.boostTrails.rightReference.getWorldPosition(this.boostTrails.right.position)
+            this.boostTrails.right.alpha = trailAlpha
+        }
 
         // Boost animation
-        this.boostAnimation.mix += (this.game.player.boosting ? 1 : - 1) * this.game.ticker.deltaScaled * this.boostAnimation.speed
-        this.boostAnimation.mix = clamp(this.boostAnimation.mix, 0, 1)
-        // this.boostAnimation.mixUniform.value = remapClamp(this.boostAnimation.mix, 0, 0.2, 0, 1)
-        this.boostAnimation.mixUniform.value = 1 - Math.pow(1 - this.boostAnimation.mix, 7)
-        if(this.parts.energy)
+        if(!this.characterMode && this.boostAnimation)
         {
-            this.parts.cell1.position.y = remapClamp(this.boostAnimation.mix, 0, 0.6, 0.2, 0)
-            this.parts.cell3.position.y = remapClamp(this.boostAnimation.mix, 0.2, 0.8, 0.2, 0)
-            this.parts.cell2.position.y = remapClamp(this.boostAnimation.mix, 0.4, 1, 0.2, 0)
+            this.boostAnimation.mix += (this.game.player.boosting ? 1 : - 1) * this.game.ticker.deltaScaled * this.boostAnimation.speed
+            this.boostAnimation.mix = clamp(this.boostAnimation.mix, 0, 1)
+
+            this.boostAnimation.mixUniform.value = 1 - Math.pow(1 - this.boostAnimation.mix, 7)
+
+            if(this.parts.energy)
+            {
+                this.parts.cell1.position.y = remapClamp(this.boostAnimation.mix, 0, 0.6, 0.2, 0)
+                this.parts.cell3.position.y = remapClamp(this.boostAnimation.mix, 0.2, 0.8, 0.2, 0)
+                this.parts.cell2.position.y = remapClamp(this.boostAnimation.mix, 0.4, 1, 0.2, 0)
+            }
         }
 
         // Screen position
@@ -543,5 +576,10 @@ export class VisualVehicle
 
         this.screenPosition.x = (vector.x * 0.5 + 0.5)
         this.screenPosition.y = (vector.y * -0.5 + 0.5)
+
+        if(this.characterMode)
+        {
+            this.hideVehicleVisuals()
+        }
     }
 }

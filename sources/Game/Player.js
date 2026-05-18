@@ -14,6 +14,8 @@ export class Player
     {
         this.game = Game.getInstance()
         
+        this.game.player = this
+        
         this.state = Player.STATE_DEFAULT
         this.accelerating = 0
         this.steering = 0
@@ -55,164 +57,22 @@ export class Player
     setSounds()
     {
         this.sounds = {}
-        this.sounds.suspensions = this.game.audio.register({
-            path: 'sounds/vehicle/suspensions/Robotic_Lifeforms_2_-_Air_Source_-_Piston_Studio_Chair_07.mp3',
-            autoplay: false,
-            loop: false,
-            volume: 0.4,
-            antiSpam: 0.1,
-            onPlay: (item, count) =>
-            {
-                item.volume = 0.3 + count * 0.08
-                item.rate = 0.9 + Math.random() * 0.2
-            }
-        })
-        this.sounds.honk = this.game.audio.register(
-        {
-            path: 'sounds/vehicle/honk/Car Horn Long 4.mp3',
-            autoplay: true,
-            loop: true,
-            volume: 0.4,
-            antiSpam: 0.1,
-            onPlaying: (item) =>
-            {
-                item.volume = this.game.inputs.actions.get('honk').active ? 0.5 : 0
-            }
-        })
-        this.sounds.spring1 = this.game.audio.register({
-            path: 'sounds/vehicle/springs/HandleSqueak_BW.60329.mp3',
-            autoplay: false,
-            loop: false,
-            volume: 0.4,
-            antiSpam: 1,
-            onPlay: (item, count) =>
-            {
-                item.volume = 0.05 + count * 0.02
-                item.rate = 1 + Math.random() * 0.1
-            }
-        })
-        this.sounds.spring2 = this.game.audio.register({
-            path: 'sounds/vehicle/springs/SpringMetalMovements_1u54Y_01.mp3',
-            autoplay: false,
-            loop: false,
-            volume: 0.4,
-            antiSpam: 0.2,
-            onPlay: (item, count) =>
-            {
-                item.volume = 0.05 + count * 0.1
-                item.rate = 0.9 + Math.random() * 0.4
-            }
-        })
 
-        // Wheels on floor
-        {
-            // Default pebbles
-            this.game.audio.register({
-                group: 'wheelsOnFloor',
-                path: 'sounds/vehicle/floor/wheels-on-pebbles-road.mp3',
-                autoplay: true,
-                loop: true,
-                volume: 0,
-                onPlaying: (item) =>
-                {
-                    const defaultElevation = 1.08
-                    const inAirEffect = remapClamp(Math.abs(this.game.physicalVehicle.position.y - defaultElevation), 0, 2, 1, 0)
-                    const speedEffect = Math.min(1, this.game.physicalVehicle.xzSpeed * 0.1)
-                    item.volume = inAirEffect * speedEffect * 0.25
-                }
-            })
+        // Character mode:
+        // Vehicle sounds disabled.
+        // Later we can add footsteps, jump sounds, landing sounds, etc.
 
-            // Brake pebbles
-            this.game.audio.register({
-                group: 'wheelsOnFloor',
-                path: 'sounds/vehicle/floor/Source Stone Loop Small Rubbing Pebbles On Concrete 02.mp3',
-                autoplay: true,
-                loop: true,
-                volume: 0,
-                onPlaying: (item) =>
-                {
-                    const directionRatio = (1 - Math.abs(this.game.physicalVehicle.forwardRatio)) * 0.6
-                    
-                    let brakeEffect = Math.max(directionRatio, this.game.player.braking) * this.game.physicalVehicle.xzSpeed * 0.15 * this.game.physicalVehicle.wheels.inContactCount / 4
-                    brakeEffect = clamp(brakeEffect, 0, 1)
-
-                    const volume = brakeEffect * 0.4
-                    const delta = volume - item.volume
-
-                    if(delta > 0)
-                        item.volume += delta * this.game.ticker.deltaScaled * 20
-                    else
-                        item.volume += delta * this.game.ticker.deltaScaled * 5
-                    
-                    item.rate = 0.8
-                }
-            })
+        this.sounds.suspensions = {
+            play: () => {}
         }
 
-        // Engine and speed
-        {
-            // Engine
-            this.game.audio.register({
-                path: 'sounds/vehicle/engine/muscle car engine loop idle.mp3',
-                autoplay: true,
-                loop: true,
-                volume: 0,
-                onPlaying: (item) =>
-                {
-                    const accelerating = Math.abs(this.game.player.accelerating) * 0.5
-                    const boosting = this.game.player.boosting + 1
-                    const volume = Math.max(0.05, accelerating * boosting * 0.8)
-                    const delta = volume - item.volume
-                    const easing = delta > 0 ? 10 : 2.5
-                    
-                    item.volume += delta * this.game.ticker.deltaScaled * easing
-
-                    const rate = remapClamp(accelerating * boosting, 0, 1, 0.6, 1.1)
-                    item.rate += (rate - item.rate) * this.game.ticker.deltaScaled * 5
-                }
-            })
-
-            // Spin and wind
-            this.game.audio.register({
-                path: 'sounds/vehicle/spin/41051 Glass stone turning loop 09-full.mp3',
-                autoplay: true,
-                loop: true,
-                volume: 0,
-                onPlaying: (item) =>
-                {
-                    const speedEffect = clamp(this.game.physicalVehicle.xzSpeed * 0.1, 0, 1)
-                    const volume = speedEffect * 0.3
-                    const delta = volume - item.volume
-                    const easing = delta > 0 ? 10 : 2.5
-                    
-                    item.volume += delta * this.game.ticker.deltaScaled * easing
-
-                    const rate = remapClamp(speedEffect, 0, 1, 1, 2)
-                    item.rate += (rate - item.rate) * this.game.ticker.deltaScaled * 5
-                }
-            })
+        this.sounds.spring1 = {
+            play: () => {}
         }
 
-        // Boost
-        this.game.audio.register({
-            path: 'sounds/vehicle/energy/Energy_-_force_field_8_loop.mp3',
-            autoplay: true,
-            loop: true,
-            volume: 0,
-            onPlaying: (item) =>
-            {
-                const accelerating = 0.5 + Math.abs(this.game.player.accelerating) * 0.5
-                const boosting = this.game.player.boosting
-                const volume = accelerating * boosting * 0.3
-                const delta = volume - item.volume
-                const easing = delta > 0 ? 10 : 1
-                
-                item.volume += delta * this.game.ticker.deltaScaled * easing
-
-                const rate = 0.95 + Math.abs(this.game.player.accelerating) * 2
-                item.rate += (rate - item.rate) * this.game.ticker.deltaScaled * 5
-            }
-        })
+        this.sounds.spring2 = {
+            lay: () => {}
+        }
     }
 
     setInputs()
@@ -348,6 +208,20 @@ export class Player
         this.unstuck.duration = 3
         this.unstuck.delay = null
 
+        // Character mode / PhysicsCharacter compatibility:
+        // If the current physical player has no vehicle events,
+        // skip car-specific upside-down / stuck logic.
+        if(!this.game.physicalVehicle.events)
+        {
+            this.game.inputs.interactiveButtons.events.on('unstuck', () =>
+            {
+                this.game.inputs.interactiveButtons.removeItems(['unstuck'])
+                this.respawn()
+            })
+
+            return
+        }
+
         this.game.physicalVehicle.events.on('rightSideUp', () =>
         {
             // Reset delay
@@ -368,7 +242,7 @@ export class Player
                 if(this.game.physicalVehicle.upsideDown.active)
                 {
                     this.game.physicalVehicle.flip.jump()
-                    
+                
                     // Sound
                     this.sounds.suspensions.play(4)
 
@@ -443,6 +317,12 @@ export class Player
 
     setFlip()
     {
+        // Character mode: PhysicsCharacter has no vehicle flip events
+        if(!this.game.physicalVehicle.events)
+        {
+            return
+        }
+
         this.game.physicalVehicle.events.on('flip', (direction) =>
         {
             if(direction > 0)
@@ -532,17 +412,17 @@ export class Player
         /**
          * Accelerating
          */
-        if(this.game.inputs.actions.get('forward').active)
-            this.accelerating += this.game.inputs.actions.get('forward').value
-
-        if(this.game.inputs.actions.get('backward').active)
-            this.accelerating -= this.game.inputs.actions.get('backward').value
+        // Character mode: vehicle acceleration disabled
+        this.accelerating = 0
 
         /**
-         * Boosting
-         */
-        if(this.game.inputs.actions.get('boost').active)
-            this.boosting = 1
+        * Character mode: running/boost disabled for now
+        */
+        this.boosting = 0
+
+        // Later:
+            // if(this.game.inputs.actions.get('boost').active)
+                //this.running = true
 
         /**
          * Braking
@@ -550,58 +430,38 @@ export class Player
         if(this.game.inputs.actions.get('brake').active)
         {
             this.accelerating = 0
-            this.braking = 1
+            this.braking = 0
         }
 
         /**
          * Steering
          */
-        // Left / right actions
-        if(this.game.inputs.actions.get('right').active)
-            this.steering -= 1
-        if(this.game.inputs.actions.get('left').active)
-            this.steering += 1
+        // Character mode: vehicle steering disabled
+        this.steering = 0
 
-        // Gamepad joystick
-        if(this.steering === 0 && this.game.inputs.gamepad.joysticks.left.active)
-            this.steering = - this.game.inputs.gamepad.joysticks.left.safeX
+        // Gamepad / mobile joystick are now handled by PhysicsCharacter.
+        // Vehicle steering / acceleration disabled in character mode.
+        this.steering = 0
+        this.accelerating = 0
 
-        /**
-         * Nipple
-         */
         if(this.game.inputs.nipple.active && this.game.inputs.nipple.progress > 0)
         {
             if(!this.game.view.focusPoint.isTracking)
             {
-                // Wait a few frames in case it a multi-touch
+                // Wait a few frames in case it's multi-touch
                 this.game.ticker.wait(5, () =>
                 {
                     if(this.game.inputs.nipple.active)
                         this.game.view.focusPoint.isTracking = true
                 })
             }
-            this.accelerating = Math.pow(this.game.inputs.nipple.progress, 3)
-            // this.boosting = this.game.inputs.nipple.progress > 0.999
-
-            const angleDeltaAbs = Math.abs(this.game.inputs.nipple.smallestAngle)
-            const angleDeltaAbsNormalized = angleDeltaAbs / ((Math.PI * 2 - this.game.inputs.nipple.forwardAmplitude) / 2)
-            const angleDeltaSign = Math.sign(this.game.inputs.nipple.smallestAngle)
-            const steering = - Math.min(angleDeltaAbsNormalized, 1) * angleDeltaSign
-
-            this.steering = steering
-
-            if(!this.game.inputs.nipple.forward)
-            {
-                this.accelerating *= -1
-                this.steering *= -1
-            }
         }
     }
-
     updatePostPhysics()
     {
         // Position
         this.position.copy(this.game.physicalVehicle.position)
+        //this.position.copy(this.game.physicalCharacter.position)
         this.position2 = new THREE.Vector2(this.position.x, this.position.z)
         
         // View > Focus point
@@ -620,10 +480,14 @@ export class Player
 
         // Inputs touch joystick
         this.rotationY = Math.atan2(this.game.physicalVehicle.forward.z, this.game.physicalVehicle.forward.x)
+        //this.rotationY = this.game.physicalCharacter.rotationY
         this.game.inputs.nipple.setCoordinates(this.position.x, this.position.y, this.position.z, this.rotationY)
 
         // Sound
-        if(this.game.physicalVehicle.wheels.justTouchedCount > 1)
+        if(
+            this.game.physicalVehicle.wheels &&
+            this.game.physicalVehicle.wheels.justTouchedCount > 1
+        )
         {
             this.sounds.spring1.play(this.game.physicalVehicle.wheels.justTouchedCount)
             this.sounds.spring2.play(this.game.physicalVehicle.wheels.justTouchedCount)
