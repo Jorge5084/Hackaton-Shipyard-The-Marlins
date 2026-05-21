@@ -85,7 +85,7 @@ export class Player
             { name: 'boost',                 categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.ShiftLeft', 'Keyboard.ShiftRight', 'Gamepad.circle' ] },
             { name: 'brake',                 categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.KeyB', 'Keyboard.ControlLeft', 'Gamepad.square' ] },
             { name: 'respawn',               categories: [ 'wandering',                       ], keys: [ 'Keyboard.KeyR', 'Gamepad.select' ] },
-            { name: 'suspensions',           categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad5', 'Keyboard.Space', 'Gamepad.triangle' ] },
+            { name: 'suspensions', categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.Numpad5' ] },
             { name: 'suspensionsFront',      categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad8' ] },
             { name: 'suspensionsBack',       categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad2' ] },
             { name: 'suspensionsRight',      categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad6', 'Gamepad.r1' ] },
@@ -382,21 +382,9 @@ export class Player
 
     honk()
     {
-        // Suspensions
-        const randomWheelIndex = Math.floor(Math.random() * 4)
-        const previousState = this.suspensions[randomWheelIndex]
-        this.suspensions[ randomWheelIndex ] = 'mid'
-
-        gsap.delayedCall(0.15, () =>
-        {
-            if(this.suspensions[ randomWheelIndex ] === 'mid')
-            {
-                this.suspensions[ randomWheelIndex ] = previousState
-            }
-        })
-
-        // Achievement
-        this.game.achievements.addProgress('honk')
+        // Character mode:
+        // No vehicle horn, no suspension animation, no honk achievement.
+        return
     }
 
     updatePrePhysics()

@@ -18,6 +18,7 @@ export class VisualCharacter
             idle: null,
             walk: null,
             run: null,
+            jump: null,
             fallback: null,
         }
 
@@ -45,7 +46,7 @@ export class VisualCharacter
             this.model = gltf.scene
 
             this.model.scale.set(0.5, 0.5, 0.5)
-            this.model.position.set(0, 0, 0)
+            this.model.position.set(0, -0.2, 0)
 
             this.model.traverse((child) =>
             {
@@ -120,7 +121,11 @@ export class VisualCharacter
             names.find((name) => name.includes('run')) ||
             null
 
-        // En tu robot esto debería ser Robot_Dance
+        this.animationNames.jump =
+        names.find((name) => name.includes('jump')) ||
+        null
+
+        // Fallback, por si el modelo no tiene idle/walk/run/jump
         this.animationNames.fallback =
             names.find((name) => name.includes('dance')) ||
             names[0] ||
@@ -177,11 +182,20 @@ export class VisualCharacter
         const velocity = physicalVehicle.velocity
 
         const horizontalSpeed = Math.sqrt(
-        velocity.x * velocity.x +
-        velocity.z * velocity.z
+            velocity.x * velocity.x +
+            velocity.z * velocity.z
         )
 
-        if(horizontalSpeed > 4 && this.animationNames.run)
+        // Priority:
+        // 1. Jump
+        // 2. Run
+        // 3. Walk
+        // 4. Idle
+        if(physicalVehicle.isJumping && this.animationNames.jump)
+        {
+            this.play(this.animationNames.jump)
+        }
+        else if(physicalVehicle.isRunning && this.animationNames.run)
         {
             this.play(this.animationNames.run)
         }
@@ -192,6 +206,10 @@ export class VisualCharacter
         else if(this.animationNames.idle)
         {
             this.play(this.animationNames.idle)
+        }
+        else if(this.animationNames.fallback)
+        {
+            this.play(this.animationNames.fallback)
         }
     }
 

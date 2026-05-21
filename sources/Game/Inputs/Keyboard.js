@@ -24,7 +24,12 @@ export default class Keyboard
             if(document.activeElement.matches('input, textarea, [contenteditable]') && _event.code !== 'Escape')
                 return
                 
-            this.pressed.push(_event.code, _event.key)
+            if(!this.pressed.includes(_event.code))
+                this.pressed.push(_event.code)
+
+            if(!this.pressed.includes(_event.key))
+                this.pressed.push(_event.key)
+            
             this.events.trigger('down', [ _event.code, _event.key ])
         })
 

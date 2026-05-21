@@ -32,8 +32,18 @@ export class PhysicsCharacter
 
             items: [],
         }
+        //caminar y correr
+        this.walkSpeed = 4
+        this.runSpeed= 6
 
-        this.walkSpeed = 5
+        //medicion del salto
+        this.jumpForce = 5
+        this.isJumping = false
+        this.isGrounded = false
+        this.jumpWasPressed = false
+
+        this.lastJumpTime = -Infinity
+        this.minJumpAirTime = 0.45
 
         this.character = this.game.objects.add(null, {
             type: 'dynamic',
@@ -43,7 +53,7 @@ export class PhysicsCharacter
                 {
                     shape: 'cylinder',
                     parameters: [0.9, 0.35],
-                    position: { x: 0, y: 0.9, z: 0 },
+                    position: { x: 0, y: 0.7, z: 0 },
                     mass: 1,
                 },
             ],
@@ -118,16 +128,38 @@ export class PhysicsCharacter
         }
 
         const hasMovementInput = inputX !== 0 || inputZ !== 0
+        const isRunning = this.game.inputs.actions.get('boost')?.active
+        const moveSpeed = isRunning ? this.runSpeed : this.walkSpeed
+        const jumpPressed = this.game.inputs.keyboard.pressed.includes('Space')
+        const canDetectGroundAfterJump = this.game.ticker.elapsed - this.lastJumpTime > this.minJumpAirTime
+
+        if(jumpPressed && !this.jumpWasPressed && this.isGrounded)
+        {
+            this.body.setLinvel({
+                x: currentVelocity.x,
+                y: this.jumpForce,
+                z: currentVelocity.z,
+            }, true)
+
+            this.isGrounded = false
+            this.isJumping = true
+            this.lastJumpTime = this.game.ticker.elapsed
+        }
+
+        this.jumpWasPressed = jumpPressed
 
         if(!hasMovementInput)
         {
+            const latestVelocity = this.body.linvel()
+
             this.body.setLinvel({
                 x: 0,
-                y: currentVelocity.y,
+                y: latestVelocity.y,
                 z: 0,
             }, true)
 
             this.goingForward = false
+            this.isRunning = false
             return
         }
 
@@ -164,10 +196,13 @@ export class PhysicsCharacter
             this.rotationY
         )
 
+        this.isRunning = isRunning
+        const latestVelocity = this.body.linvel()
+
         this.body.setLinvel({
-            x: direction.x * this.walkSpeed,
-            y: currentVelocity.y,
-            z: direction.z * this.walkSpeed,
+            x: direction.x * moveSpeed,
+            y: latestVelocity.y,
+            z: direction.z * moveSpeed,
         }, true)
 
         this.goingForward = true
@@ -206,8 +241,30 @@ export class PhysicsCharacter
 
         this.speed = this.xzSpeed
         this.forwardSpeed = this.xzSpeed
+        // Ground detection
+        const canDetectGroundAfterJump = this.game.ticker.elapsed - this.lastJumpTime > this.minJumpAirTime
 
-        this.wheels.inContactCount = this.position.y <= 3.05 ? 1 : 0
+        const closeToGround = this.position.y <= 1.2
+        const fallingOrStill = velocity.y <= 0.05
+
+        if(canDetectGroundAfterJump && closeToGround && fallingOrStill)
+        {
+            this.isGrounded = true
+            this.isJumping = false
+        }
+        else if(!this.isGrounded)
+        {
+            this.isJumping = true
+        }
+
+        // Do not auto-enable jumping while falling.
+        // Jump animation should start only when Space triggered the jump.
+        if(this.isGrounded)
+        {
+            this.isJumping = false
+        }
+
+        this.wheels.inContactCount = this.isGrounded ? 1 : 0
         this.wheels.justTouchedCount = 0
         this.wheels.justTouchedFloor = false
     }
@@ -226,7 +283,7 @@ export class PhysicsCharacter
 
         this.introLockedPosition.copy(position)
         // ajuste en el numero 4 para que no se eleve
-        this.introLockedPosition.y -= 4
+        this.introLockedPosition.y -= 3.8
     }
 
     destroy()
