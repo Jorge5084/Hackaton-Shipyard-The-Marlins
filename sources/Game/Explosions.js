@@ -51,30 +51,32 @@ export class Explosions
                     physicalObject.body.applyImpulseAtPoint(impulse, point, true)
                 })
 
-                // Is vehicle
-                if(physicalObject === this.game.physicalVehicle.chassis.physical)
-                {
-                    if(finalStrength > bulletTimeStrengthThreshold)
-                    {
-                        this.game.time.bulletTime.activate()
-
-                        return true
-                    }
-                }
+                // Character mode: old vehicle explosion / bullet-time reaction disabled.
             }
 
             return false
         }
 
         let vehicleHit = false
+
         if(vehicleOnly)
-            vehicleHit = applyPhysicsExplosion(this.game.physicalVehicle.chassis.physical)
+        {
+            // Character mode:
+            // Old vehicle-only explosion disabled because PhysicsCharacter has no vehicle chassis.
+            const vehicleChassisPhysical = this.game.physicalVehicle.chassis?.physical
+
+            if(vehicleChassisPhysical)
+                vehicleHit = applyPhysicsExplosion(vehicleChassisPhysical)
+        }
         else
+        {
             this.game.objects.list.forEach((object) =>
             {
                 if(object.physical && object.physical.type === 'dynamic' && object.physical.body.isEnabled())
                     vehicleHit = vehicleHit | applyPhysicsExplosion(object.physical)
             })
+        }
+
         // console.log('vehicleHit', vehicleHit)
 
         return vehicleHit

@@ -11,7 +11,8 @@ import { Leaves } from './Leaves.js'
 import { Lightnings } from './Lightnings.js'
 import { Snow } from './Snow.js'
 import { Whispers } from './Whispers.js'
-import { VisualVehicle } from './VisualVehicle.js'
+//import { VisualVehicle } from './VisualVehicle.js'
+import { VisualPlayer } from './VisualPlayer.js'
 import { VisualTornado } from './VisualTornado.js'
 import { Flowers } from './Flowers.js'
 import { Bricks } from './Bricks.js'
@@ -53,7 +54,11 @@ export class World
         }
         else if(step === 1)
         {
-            this.visualVehicle = new VisualVehicle(this.game.resources.vehicle.scene)
+            //aqui hubo un codigo y se cambio del carro
+            this.visualPlayer = new VisualPlayer()
+            // Temporary compatibility alias:
+            // Old systems still read this.game.world.visualVehicle.screenPosition
+            //this.visualVehicle = this.visualPlayer
             this.floor = new Floor()
             this.waterSurface = new WaterSurface()
             this.grass = new Grass()

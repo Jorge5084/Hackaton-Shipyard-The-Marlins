@@ -21,7 +21,7 @@ export class Player
         this.steering = 0
         this.boosting = 0
         this.braking = 0
-        this.suspensions = ['low', 'low', 'low', 'low']
+        //this.suspensions = ['low', 'low', 'low', 'low']
 
         const respawn = this.game.respawns.getDefault()
 
@@ -32,15 +32,15 @@ export class Player
 
         this.setSounds()
         this.setInputs()
-        this.setDistanceDriven()
+        //this.setDistanceDriven()
         this.setUnstuck()
         // this.setBackWheel()
         this.setFlip()
         this.setTimePlayed()
 
-        this.game.physicalVehicle.chassis.physical.initialState.position.x = respawn.position.x
-        this.game.physicalVehicle.chassis.physical.initialState.position.y = respawn.position.y
-        this.game.physicalVehicle.chassis.physical.initialState.position.z = respawn.position.z
+        // Character mode:
+        // PhysicsCharacter does not use vehicle chassis initialState.
+        // Move the character directly to the respawn position.
         this.game.physicalVehicle.moveTo(respawn.position, respawn.rotation)
 
         this.game.ticker.events.on('tick', () =>
@@ -62,7 +62,7 @@ export class Player
         // Vehicle sounds disabled.
         // Later we can add footsteps, jump sounds, landing sounds, etc.
 
-        this.sounds.suspensions = {
+        this.sounds.disabledVehicleSound = {
             play: () => {}
         }
 
@@ -71,31 +71,23 @@ export class Player
         }
 
         this.sounds.spring2 = {
-            lay: () => {}
+            play: () => {}
         }
     }
 
     setInputs()
     {
         this.game.inputs.addActions([
-            { name: 'forward',               categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowUp', 'Keyboard.KeyW', 'Gamepad.up', 'Gamepad.r2' ] },
-            { name: 'right',                 categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowRight', 'Keyboard.KeyD', 'Gamepad.right' ] },
-            { name: 'backward',              categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowDown', 'Keyboard.KeyS', 'Gamepad.down', 'Gamepad.l2' ] },
-            { name: 'left',                  categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowLeft', 'Keyboard.KeyA', 'Gamepad.left' ] },
-            { name: 'boost',                 categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.ShiftLeft', 'Keyboard.ShiftRight', 'Gamepad.circle' ] },
-            { name: 'brake',                 categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.KeyB', 'Keyboard.ControlLeft', 'Gamepad.square' ] },
-            { name: 'respawn',               categories: [ 'wandering',                       ], keys: [ 'Keyboard.KeyR', 'Gamepad.select' ] },
-            { name: 'suspensions', categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.Numpad5' ] },
-            { name: 'suspensionsFront',      categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad8' ] },
-            { name: 'suspensionsBack',       categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad2' ] },
-            { name: 'suspensionsRight',      categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad6', 'Gamepad.r1' ] },
-            { name: 'suspensionsLeft',       categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad4', 'Gamepad.l1' ] },
-            { name: 'suspensionsFrontLeft',  categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad7', 'Keyboard.Digit2' ] },
-            { name: 'suspensionsFrontRight', categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad9', 'Keyboard.Digit3' ] },
-            { name: 'suspensionsBackRight',  categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad3', 'Keyboard.Digit4' ] },
-            { name: 'suspensionsBackLeft',   categories: [ 'wandering', 'racing'              ], keys: [ 'Keyboard.Numpad1', 'Keyboard.Digit1' ] },
-            { name: 'interact',              categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.Enter', 'Keyboard.KeyE', 'Keyboard.KeyF', 'Gamepad.cross' ] },
-            { name: 'honk',                  categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.KeyH', 'Gamepad.l3' ] },
+            { name: 'forward',  categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowUp', 'Keyboard.KeyW', 'Gamepad.up', 'Gamepad.r2' ] },
+            { name: 'right',    categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowRight', 'Keyboard.KeyD', 'Gamepad.right' ] },
+            { name: 'backward', categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowDown', 'Keyboard.KeyS', 'Gamepad.down', 'Gamepad.l2' ] },
+            { name: 'left',     categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.ArrowLeft', 'Keyboard.KeyA', 'Gamepad.left' ] },
+
+            // Character actions
+            { name: 'boost',    categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.ShiftLeft', 'Keyboard.ShiftRight', 'Gamepad.circle' ] },
+            { name: 'brake',    categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyB', 'Keyboard.ControlLeft', 'Gamepad.square' ] },
+            { name: 'respawn',  categories: [ 'wandering' ], keys: [ 'Keyboard.KeyR', 'Gamepad.select' ] },
+            { name: 'interact', categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.Enter', 'Keyboard.KeyE', 'Keyboard.KeyF', 'Gamepad.cross' ] },
         ])
 
         // Respawn
@@ -105,85 +97,19 @@ export class Player
                 return
 
             if(action.active)
-            {
                 this.respawn()
-            }
         })
 
-        // Honk
-        this.game.inputs.events.on('honk', (action) =>
+        // Mobile/touch focus tracking
+        // Actual mobile movement is handled by PhysicsCharacter.
+        if(this.game.inputs.nipple)
         {
-            if(action.active)
-                this.honk()
-        })
-
-        // Suspensions
-        const suspensionsUpdate = () =>
-        {
-            if(this.state !== Player.STATE_DEFAULT)
-                return
-
-            const activeSuspensions = [
-                this.game.inputs.actions.get('suspensions').active || this.game.inputs.actions.get('suspensionsFront').active || this.game.inputs.actions.get('suspensionsRight').active || this.game.inputs.actions.get('suspensionsFrontRight').active, // front right
-                this.game.inputs.actions.get('suspensions').active || this.game.inputs.actions.get('suspensionsFront').active || this.game.inputs.actions.get('suspensionsLeft').active || this.game.inputs.actions.get('suspensionsFrontLeft').active, // front left
-                this.game.inputs.actions.get('suspensions').active || this.game.inputs.actions.get('suspensionsBack').active || this.game.inputs.actions.get('suspensionsRight').active || this.game.inputs.actions.get('suspensionsBackRight').active, // back right
-                this.game.inputs.actions.get('suspensions').active || this.game.inputs.actions.get('suspensionsBack').active || this.game.inputs.actions.get('suspensionsLeft').active || this.game.inputs.actions.get('suspensionsBackLeft').active, // back left
-            ]
-
-            const activeState = this.game.inputs.actions.get('suspensions').active ? 'high' : 'mid' // high = jump, mid = lowride
-
-            for(let i = 0; i < 4; i++)
-                this.suspensions[i] = activeSuspensions[i] ? activeState : 'low'
-
-            const activeCount = activeSuspensions[0] + activeSuspensions[1] + activeSuspensions[2] + activeSuspensions[3]
-            
-
-            if(activeCount)
+            this.game.inputs.nipple.events.on('tap', () =>
             {
-                // Sound
-                this.sounds.suspensions.play(activeCount)
-
-                // Not a jump => Achievement
-                if(!this.game.inputs.actions.get('suspensions').active)
-                    this.game.achievements.addProgress('suspensions')
-            }
-                
+                // Later we can connect this to character jump for mobile.
+                // For now, vehicle suspension jump is disabled.
+            })
         }
-
-        this.game.inputs.events.on('suspensions', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsFront', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsBack', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsRight', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsLeft', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsFrontLeft', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsFrontRight', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsBackRight', suspensionsUpdate)
-        this.game.inputs.events.on('suspensionsBackLeft', suspensionsUpdate)
-
-        this.game.inputs.events.on('suspensions', () =>
-        {
-            if(this.game.inputs.mode === Inputs.MODE_TOUCH)
-                this.game.inputs.nipple.jump()
-        })
-
-        // Nipple tap jump
-        let nippleJumpTimeout = null
-        this.game.inputs.nipple.events.on('tap', () =>
-        {
-            this.game.inputs.nipple.jump()
-
-            for(let i = 0; i < 4; i++)
-                this.suspensions[i] = 'high'
-
-            if(nippleJumpTimeout)
-                clearTimeout(nippleJumpTimeout)
-            
-            nippleJumpTimeout = setTimeout(() =>
-            {
-                for(let i = 0; i < 4; i++)
-                    this.suspensions[i] = 'low'
-            }, 200)
-        })
     }
 
     setDistanceDriven()
@@ -455,11 +381,8 @@ export class Player
         // View > Focus point
         this.game.view.focusPoint.trackedPosition.copy(this.position)
 
-        // View > Speed lines
-        if(this.boosting && this.accelerating && this.game.physicalVehicle.speed > 15)
-            this.game.view.speedLines.strength = 1
-        else
-            this.game.view.speedLines.strength = 0
+        // Vehicle speed lines disabled in character mode
+        this.game.view.speedLines.strength = 0
 
         this.game.view.speedLines.worldTarget.copy(this.position)
 
@@ -472,14 +395,14 @@ export class Player
         this.game.inputs.nipple.setCoordinates(this.position.x, this.position.y, this.position.z, this.rotationY)
 
         // Sound
-        if(
-            this.game.physicalVehicle.wheels &&
-            this.game.physicalVehicle.wheels.justTouchedCount > 1
-        )
-        {
-            this.sounds.spring1.play(this.game.physicalVehicle.wheels.justTouchedCount)
-            this.sounds.spring2.play(this.game.physicalVehicle.wheels.justTouchedCount)
-        }
+        //if(
+            //this.game.physicalVehicle.wheels &&
+            //this.game.physicalVehicle.wheels.justTouchedCount > 1
+        //)
+        //{
+            //this.sounds.spring1.play(this.game.physicalVehicle.wheels.justTouchedCount)
+            //this.sounds.spring2.play(this.game.physicalVehicle.wheels.justTouchedCount)
+        //}
 
         // Time played
         this.timePlayed.all += this.game.ticker.delta
@@ -492,14 +415,14 @@ export class Player
         }
 
         // Sea achievement
-        const distanceToCenter = this.position2.length()
-        if(distanceToCenter > 120)
-            this.game.achievements.setProgress('sea', 1)
+        //const distanceToCenter = this.position2.length()
+        //if(distanceToCenter > 120)
+            //this.game.achievements.setProgress('sea', 1)
 
         // Go high achievements
-        const elevation = Math.floor(this.position.y)
-        if(this.game.achievements.groups.get('goHigh') && elevation > this.game.achievements.groups.get('goHigh').progress)
-            this.game.achievements.setProgress('goHigh', elevation)
+        //const elevation = Math.floor(this.position.y)
+        //if(this.game.achievements.groups.get('goHigh') && elevation > this.game.achievements.groups.get('goHigh').progress)
+            //this.game.achievements.setProgress('goHigh', elevation)
 
         // // Speed achievement
         // const speedKmPerHour = Math.floor(this.game.physicalVehicle.xzSpeed / 1000 * 3600)
@@ -508,22 +431,22 @@ export class Player
         //     this.game.achievements.setProgress('speed', speedKmPerHour)
 
         // Distance driven
-        this.distanceDriven.value += this.game.physicalVehicle.xzSpeed * this.game.ticker.deltaScaled
-        const flooredDistanceDriven = Math.floor(this.distanceDriven.value)
+        //this.distanceDriven.value += this.game.physicalVehicle.xzSpeed * this.game.ticker.deltaScaled
+        //const flooredDistanceDriven = Math.floor(this.distanceDriven.value)
 
-        if(flooredDistanceDriven !== this.distanceDriven.floored)
-        {
-            localStorage.setItem('distanceDriven', flooredDistanceDriven)
-            this.distanceDriven.floored = flooredDistanceDriven
-        }
+        //if(flooredDistanceDriven !== this.distanceDriven.floored)
+        //{
+            //localStorage.setItem('distanceDriven', flooredDistanceDriven)
+            //this.distanceDriven.floored = flooredDistanceDriven
+        //}
         
         // Achievement
-        const distanceDrivenKm = Math.floor(this.distanceDriven.value / 1000)
+        //const distanceDrivenKm = Math.floor(this.distanceDriven.value / 1000)
 
-        if(this.game.achievements.groups.get('distanceDriven') && distanceDrivenKm > this.game.achievements.groups.get('distanceDriven').progress)
-        {
-            this.game.achievements.setProgress('distanceDriven', distanceDrivenKm)
+        //if(this.game.achievements.groups.get('distanceDriven') && distanceDrivenKm > this.game.achievements.groups.get('distanceDriven').progress)
+        //{
+            //this.game.achievements.setProgress('distanceDriven', distanceDrivenKm)
 
-        }
+        //}
     }
 }

@@ -1,6 +1,5 @@
 import * as THREE from 'three/webgpu'
 import { Game } from './Game.js'
-import { VisualVehicle } from './World/VisualVehicle.js'
 
 export class KonamiCode
 {
@@ -10,6 +9,7 @@ export class KonamiCode
 
         let index = 0
         this.activationCount = 0
+
         const sequence = [
             [ 'ArrowUp', 'KeyW' ],
             [ 'ArrowUp', 'KeyW' ],
@@ -46,22 +46,15 @@ export class KonamiCode
                 index = 0
             }
         }
+
         document.addEventListener('keydown', callback)
     }
 
     async activate()
     {
-        const files = [
-            'vehicle/oldSchool.glb',
-            'vehicle/default.glb'
-        ]
-        
-        const resources = await this.game.resourcesLoader.load([
-            [ 'vehicle', `${files[this.activationCount % 2]}?cb=${this.activationCount}`, 'gltf' ],
-        ])
-            
-        this.game.world.visualVehicle.destroy()
-        this.game.world.visualVehicle = new VisualVehicle(resources.vehicle.scene)
+        // Character mode:
+        // Old vehicle model swap disabled.
+        // Keep only a small confetti reward for now.
 
         if(this.game.world.confetti)
         {

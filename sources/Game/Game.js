@@ -26,7 +26,7 @@ import { Explosions } from './Explosions.js'
 import { YearCycles } from './Cycles/YearCycles.js'
 import { Server } from './Server.js'
 import { Modals } from './Modals.js'
-import { PhysicsVehicle } from './Physics/PhysicsVehicle.js'
+//import { PhysicsVehicle } from './Physics/PhysicsVehicle.js'
 import { PhysicsCharacter } from './Physics/PhysicsCharacter.js'
 import { PhysicsWireframe } from './Physics/PhysicsWireframe.js'
 import { Zones } from './Zones.js'
@@ -134,7 +134,7 @@ export class Game
             [
                 [ 'foliageTexture',                        `foliage/foliageSDF.${compressedTextureExtension}${cb}`,                              compressedTextureFormat, (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false; } ],
                 [ 'bushesReferences',                      `bushes/bushesReferences${compressedModelSuffix}.glb${cb}`,                           'gltf' ],
-                [ 'vehicle',                               `vehicle/default${compressedModelSuffix}.glb${cb}`,                                   'gltf' ],
+                //[ 'vehicle',                               `vehicle/default${compressedModelSuffix}.glb${cb}`,                                   'gltf' ],
                 //[ 'character', 'vehicle/personaje.glb', 'gltf' ],
                 [ 'playgroundVisual',                      `playground/playgroundVisual${compressedModelSuffix}.glb${cb}`,                       'gltf' ],
                 [ 'playgroundPhysical',                    `playground/playgroundPhysical${compressedModelSuffix}.glb${cb}`,                     'gltf' ],
@@ -187,7 +187,7 @@ export class Game
         this.terrain = new Terrain()
         this.physics = new Physics()
         this.wireframe = new PhysicsWireframe()
-        //this.physicalVehicle = new PhysicsVehicle()
+        //aqui habia una fisica vieja
         this.physicalCharacter = new PhysicsCharacter()
         // Alias temporal para que el resto del juego siga usando physicalVehicle
         this.physicalVehicle = this.physicalCharacter

@@ -136,15 +136,6 @@ export class View
             'boost',
             'brake',
             'respawn',
-            'suspensions',
-            'suspensionsFront',
-            'suspensionsBack',
-            'suspensionsRight',
-            'suspensionsLeft',
-            'suspensionsFrontLeft',
-            'suspensionsFrontRight',
-            'suspensionsBackRight',
-            'suspensionsBackLeft',
             'interact',
             'whisper'
         ]
