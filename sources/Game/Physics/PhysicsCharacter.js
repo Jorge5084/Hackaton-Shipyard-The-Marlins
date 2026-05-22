@@ -33,7 +33,7 @@ export class PhysicsCharacter
             items: [],
         }
         //caminar y correr
-        this.walkSpeed = 4
+        this.walkSpeed = 2.5
         this.runSpeed= 6
 
         //medicion del salto

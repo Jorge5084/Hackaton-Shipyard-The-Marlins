@@ -250,6 +250,10 @@ export class Tornado
         force.y = flyForce * 2
 
         force.setLength(strength * this.game.ticker.deltaScaled * this.strength * 30)
-        this.game.physicalVehicle.chassis.physical.body.applyImpulse(force)
+
+        // Character mode:
+        // Old tornado force on vehicle chassis disabled.
+        // The new player uses PhysicsCharacter, not a vehicle chassis.
+        // this.game.physicalVehicle.chassis.physical.body.applyImpulse(force)
     }
 }

@@ -9,18 +9,25 @@ export class KonamiCode
 
         let index = 0
         this.activationCount = 0
+        this.sounds = {}
+
+        this.sounds.surprise = this.game.audio.register({
+            path: 'sounds/achievements/Money Reward 2.mp3',
+            autoplay: false,
+            loop: false,
+            volume: 0.4,
+            antiSpam: 0.5
+        })
 
         const sequence = [
-            [ 'ArrowUp', 'KeyW' ],
-            [ 'ArrowUp', 'KeyW' ],
-            [ 'ArrowDown', 'KeyS' ],
-            [ 'ArrowDown', 'KeyS' ],
-            [ 'ArrowLeft', 'KeyA' ],
-            [ 'ArrowRight', 'KeyD' ],
-            [ 'ArrowLeft', 'KeyA' ],
-            [ 'ArrowRight', 'KeyD' ],
-            [ 'KeyB' ],
-            [ 'KeyQ', 'KeyA' ],
+            [ 'KeyW' ],
+            [ 'KeyW' ],
+            [ 'KeyD' ],
+            [ 'KeyD' ],
+            [ 'KeyS' ],
+            [ 'KeyS' ],
+            [ 'KeyA' ],
+            [ 'KeyA' ],
         ]
 
         const callback = (event) =>
@@ -52,20 +59,43 @@ export class KonamiCode
 
     async activate()
     {
-        // Character mode:
-        // Old vehicle model swap disabled.
-        // Keep only a small confetti reward for now.
+        const visualCharacter = this.game.world.visualPlayer?.visualCharacter
 
-        if(this.game.world.confetti)
+        if(visualCharacter && visualCharacter.toggleCharacter)
         {
-            this.game.world.confetti.pop(this.game.player.position.clone())
-            this.game.world.confetti.pop(this.game.player.position.clone().add(new THREE.Vector3(1, -1, 1.5)))
-            this.game.world.confetti.pop(this.game.player.position.clone().add(new THREE.Vector3(1, -1, -1.5)))
+            visualCharacter.toggleCharacter()
+
+            const isRobot = visualCharacter.currentCharacter === 'robot'
+
+            if(isRobot && this.game.notifications)
+            {
+                const html = /* html */`
+                    <div class="top" style="justify-content: center; text-align: center;">
+                        <div class="title" style="color: white; width: 100%;">
+                            SURPRISE!!
+                        </div>
+                    </div>
+                `
+
+                this.game.notifications.show(
+                    html,
+                    'easter-egg',
+                    1,
+                    null,
+                    'character-easter-egg'
+                )
+
+                if(this.game.world.confetti)
+                {
+                    this.game.world.confetti.pop(this.game.player.position.clone())
+                    this.game.world.confetti.pop(this.game.player.position.clone().add(new THREE.Vector3(1, -1, 1.5)))
+                    this.game.world.confetti.pop(this.game.player.position.clone().add(new THREE.Vector3(1, -1, -1.5)))
+                }
+
+                this.sounds.surprise.play()
+            }
         }
 
         this.activationCount++
-
-        // Achievement
-        this.game.achievements.setProgress('konami', 1)
     }
 }

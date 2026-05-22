@@ -85,7 +85,7 @@ export class Player
 
             // Character actions
             { name: 'boost',    categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.ShiftLeft', 'Keyboard.ShiftRight', 'Gamepad.circle' ] },
-            { name: 'brake',    categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyB', 'Keyboard.ControlLeft', 'Gamepad.square' ] },
+            //{ name: 'brake',    categories: [ 'wandering', 'racing' ], keys: [ 'Keyboard.KeyB', 'Keyboard.ControlLeft', 'Gamepad.square' ] },
             { name: 'respawn',  categories: [ 'wandering' ], keys: [ 'Keyboard.KeyR', 'Gamepad.select' ] },
             { name: 'interact', categories: [ 'wandering', 'racing', 'cinematic' ], keys: [ 'Keyboard.Enter', 'Keyboard.KeyE', 'Keyboard.KeyF', 'Gamepad.cross' ] },
         ])
@@ -341,11 +341,7 @@ export class Player
         /**
          * Braking
          */
-        if(this.game.inputs.actions.get('brake').active)
-        {
-            this.accelerating = 0
             this.braking = 0
-        }
 
         /**
          * Steering

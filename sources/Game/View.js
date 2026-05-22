@@ -134,7 +134,6 @@ export class View
             'backward',
             'left',
             'boost',
-            'brake',
             'respawn',
             'interact',
             'whisper'

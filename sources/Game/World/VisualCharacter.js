@@ -5,6 +5,20 @@ export class VisualCharacter
 {
     constructor(parent)
     {
+        this.currentCharacter = 'main'
+
+        this.characterConfigs = {
+            main: {
+                path: 'characters/main/personaje.glb',
+                scale: 0.04,
+                position: new THREE.Vector3(0, 1.3, 0),
+            },
+            robot: {
+                path: 'characters/robot/personaje.glb',
+                scale: 0.5,
+                position: new THREE.Vector3(0, -0.2, 0),
+            },
+        }
         this.game = Game.getInstance()
         this.parent = parent
 
@@ -35,18 +49,28 @@ export class VisualCharacter
         this.game.ticker.events.on('tick', this.tickCallback, 9)
     }
 
-    load()
+    load(characterName = this.currentCharacter)
     {
+        const config = this.characterConfigs[characterName]
+
+        if(!config)
+        {
+            console.warn('Character config not found:', characterName)
+            return
+        }
+
+        const resourceKey = `character_${characterName}_${Date.now()}`
+
         this.game.resourcesLoader.load([
-            ['character', 'characters/personaje.glb', 'gltf']
+            [resourceKey, config.path, 'gltf']
         ]).then((resources) =>
         {
-            const gltf = resources.character
+            const gltf = resources[resourceKey]
 
             this.model = gltf.scene
 
-            this.model.scale.set(0.5, 0.5, 0.5)
-            this.model.position.set(0, -0.2, 0)
+            this.model.scale.set(config.scale, config.scale, config.scale)
+            this.model.position.copy(config.position)
 
             this.model.traverse((child) =>
             {
@@ -59,7 +83,7 @@ export class VisualCharacter
 
             this.parent.add(this.model)
 
-            console.log('VisualCharacter cargado:', this.model)
+            console.log('VisualCharacter cargado:', characterName, this.model)
 
             if(gltf.animations && gltf.animations.length > 0)
             {
@@ -87,19 +111,65 @@ export class VisualCharacter
 
                 this.setAnimationNames(gltf.animations)
 
-                // PRUEBA: movimientos
                 if(this.animationNames.idle)
                     this.play(this.animationNames.idle)
                 else
                     this.play(this.animationNames.fallback)
 
-                console.log('Forzando animación:', this.animationNames.fallback)
+                console.log('Animaciones asignadas:', this.animationNames)
             }
             else
             {
                 console.warn('El personaje no tiene animaciones.')
             }
         })
+    }
+    clearModel()
+    {
+        if(this.mixer)
+        {
+            this.mixer.stopAllAction()
+            this.mixer = null
+        }
+
+        this.actions = {}
+
+        this.animationNames = {
+            idle: null,
+            walk: null,
+            run: null,
+            jump: null,
+            fallback: null,
+        }
+
+        this.currentAction = null
+        this.currentAnimation = null
+
+        if(this.model)
+        {
+            this.parent.remove(this.model)
+            this.model = null
+        }
+    }
+
+    setCharacter(characterName)
+    {
+        if(this.currentCharacter === characterName)
+            return
+
+        this.currentCharacter = characterName
+
+        this.clearModel()
+        this.load(characterName)
+    }
+
+    toggleCharacter()
+    {
+        const nextCharacter = this.currentCharacter === 'main' ? 'robot' : 'main'
+
+        console.log('Cambiando personaje a:', nextCharacter)
+
+        this.setCharacter(nextCharacter)
     }
 
     setAnimationNames(animations)
